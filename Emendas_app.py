@@ -69,10 +69,6 @@ df_filtrado = df_ativo.copy()  # <--- Esta linha fica encostada na margem esquer
 if not df_filtrado.empty:
     # 1. Filtro por Intervalo de Anos (Apenas se a coluna 'Ano' existir no arquivo)
     if "Ano" in df_filtrado.columns:
-
-if not df_filtrado.empty:
-    # 1. Filtro por Intervalo de Anos (Apenas se a coluna 'Ano' existir no arquivo)
-    if "Ano" in df_filtrado.columns:
         # Tenta converter para numérico temporariamente para fazer a comparação de intervalo
         df_filtrado["_Ano_Num"] = pd.to_numeric(df_filtrado["Ano"], errors="coerce").fillna(0).astype(int)
         df_filtrado = df_filtrado[(df_filtrado["_Ano_Num"] >= ano_inicial) & (df_filtrado["_Ano_Num"] <= ano_final)]
