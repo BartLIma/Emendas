@@ -39,9 +39,10 @@ df_com = carregar_banco_emendas(ARQUIVOS_EMENDAS["Comissão"])
 # --- 🎛️ PAINEL LATERAL DE NAVEGAÇÃO E FILTROS ---
 st.sidebar.header("Filtros de Pesquisa")
 
+# Ajustado para "Bancada" apenas
 tipo_emenda = st.sidebar.radio(
     "Tipo de Emenda:",
-    ["Individuais", "Bancada Obrigatória", "Comissão"]
+    ["Individuais", "Bancada", "Comissão"]
 )
 
 st.sidebar.markdown("---")
@@ -53,24 +54,23 @@ with col_ano1:
 with col_ano2:
     ano_final = st.number_input("Ano Final:", min_value=2000, max_value=2100, value=2026)
 
-busca_parlamentar = st.sidebar.text_input("Parlamentar (Em branco = Todos):", value="").strip()
+# REGRA DE NEGÓCIO ATUALIZADA: Define o padrão do campo dependendo do tipo selecionado
+default_parlamentar = ""
+if tipo_emenda == "Bancada":
+    default_parlamentar = "Bancada"
+elif tipo_emenda == "Comissão":
+    default_parlamentar = "Comissão"
+
+busca_parlamentar = st.sidebar.text_input("Parlamentar (Em branco = Todos):", value=default_parlamentar).strip()
 busca_beneficiario = st.sidebar.text_input("Beneficiário / CNPJ (Em branco = Todos):", value="").strip()
 
-# Mapeamento dinâmico sem riscos de travamento por colunas ausentes
+# Mapeamento do DataFrame baseado nos nomes dos arquivos reais
 if tipo_emenda == "Individuais":
     df_ativo = df_ind.copy() if df_ind is not None else pd.DataFrame()
-elif tipo_emenda == "Bancada Obrigatória":
+elif tipo_emenda == "Bancada":
     df_ativo = df_ban.copy() if df_ban is not None else pd.DataFrame()
 else:
-    df_ativo = df_com.copy() if df_com is not None else pd.DataFrame()# Mapeamento do DataFrame ativo baseado na seleção do menu lateral
-if tipo_emenda == "Individuais":
-    df_ativo = df_ind.copy()
-elif tipo_emenda == "Bancada Obrigatória":
-    df_ativo = df_ban.copy()
-else:
-    df_ativo = df_com.copy()  # <--- Certifique-se de que esta linha está com 4 espaços de recuo
-
-# --- LÓGICA DE FILTRAGEM DINÂMICA E SEGURA ---
+    df_ativo = df_com.copy() if df_com is not None else pd.DataFrame()# --- LÓGICA DE FILTRAGEM DINÂMICA E SEGURA ---
 df_filtrado = df_ativo.copy()  # <--- Esta linha fica encostada na margem esquerda (sem espaços antes)
 
 if not df_filtrado.empty:
@@ -147,14 +147,13 @@ else:
     st.markdown(f"**Registros localizados:** {len(df_filtrado)} linhas.")
     st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
 
-    # 3. Bloco de Exportação e Cópia Rápida para Mensagens
+   # 3. Bloco de Exportação e Cópia Rápida para Mensagens
     st.markdown("---")
     st.subheader("📥 Exportação e Compartilhamento")
     
     col_exp1, col_exp2 = st.columns(2)
     
     with col_exp1:
-        # Conversões para download limpo
         csv_buffer = df_filtrado.to_csv(index=False, sep=";").encode("utf-8-sig")
         st.download_button(
             label="📄 Baixar Resultado em CSV",
@@ -164,7 +163,7 @@ else:
         )
         
     with col_exp2:
-        # Geração dinâmica do resumo em texto para o botão de cópia rápida
+        # CORREÇÃO CRÍTICA DO ERRO DE FORMATAÇÃO (Linha 175)
         texto_resumo_copia = (
             f"📊 *RESUMO DE EMENDAS PARLAMENTARES FEDERAIS ({tipo_emenda})*\n"
             f"📅 Período de Consulta: {ano_inicial} a {ano_final}\n"
@@ -172,15 +171,13 @@ else:
             f"🏢 Beneficiário Filtrado: {busca_beneficiario if busca_beneficiario else 'Todos'}\n"
             f"🔢 Total de Linhas: {len(df_filtrado)}\n\n"
             f"💰 *VALORES CONSOLIDADOS:*\n"
-            f"• Total Instrumento: R$ {totais['Instrumento (R$)']:=,2f}\n"
-            f"• Total Empenhado: R$ {totais['Empenhado (R$)']:=,2f}\n"
-            f"• Total Pago: R$ {totais['Pago (R$)']:=,2f}\n\n"
+            f"• Total Instrumento: R$ {totais['Instrumento (R$)']:,.2f}\n"
+            f"• Total Empenhado: R$ {totais['Empenhado (R$)']:,.2f}\n"
+            f"• Total Pago: R$ {totais['Pago (R$)']:,.2f}\n\n"
             f"_Gerado automaticamente via Painel de Emendas PB_"
         ).replace(",", "X").replace(".", ",").replace("X", ".")
         
-        # Área de texto com ícone nativo de cópia no canto superior direito
         st.text_area("📋 Copie o resumo abaixo para enviar por mensagem:", value=texto_resumo_copia, height=160)
-
 # --- RODAPÉ DISCRETO PADRONIZADO DA PARCERIA ---
 st.markdown("---")
 st.markdown(
