@@ -61,8 +61,14 @@ if tipo_emenda == "Individuais":
 elif tipo_emenda == "Bancada Obrigatória":
     df_ativo = df_ban.copy()
 else:
+    df_ativo = df_com.copy()  # <--- Certifique-se de que esta linha está com 4 espaços de recuo
+
 # --- LÓGICA DE FILTRAGEM DINÂMICA E SEGURA ---
-df_filtrado = df_ativo.copy()
+df_filtrado = df_ativo.copy()  # <--- Esta linha fica encostada na margem esquerda (sem espaços antes)
+
+if not df_filtrado.empty:
+    # 1. Filtro por Intervalo de Anos (Apenas se a coluna 'Ano' existir no arquivo)
+    if "Ano" in df_filtrado.columns:
 
 if not df_filtrado.empty:
     # 1. Filtro por Intervalo de Anos (Apenas se a coluna 'Ano' existir no arquivo)
