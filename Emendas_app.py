@@ -1,3 +1,17 @@
+import pandas as pd
+import streamlit as st
+import os
+import urllib.parse
+
+st.set_page_config(layout="wide", page_title="Monitoramento de Emendas Parlamentares")
+
+# --- NOMES PADRONIZADOS DOS ARQUIVOS DE EMENDAS ---
+ARQUIVOS_EMENDAS = {
+    "Individuais": "emendas_individuais.csv",
+    "Bancada Obrigatória": "emendas_bancada.csv",
+    "Comissão": "emendas_comissao.csv"
+}
+
 # --- FUNÇÃO CORRIGIDA BASEADA NO DIAGNÓSTICO (PONTO E VÍRGULA) ---
 def carregar_banco_emendas(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
@@ -23,34 +37,6 @@ def carregar_banco_emendas(caminho_arquivo):
 df_ind = carregar_banco_emendas(ARQUIVOS_EMENDAS["Individuais"])
 df_ban = carregar_banco_emendas(ARQUIVOS_EMENDAS["Bancada Obrigatória"])
 df_com = carregar_banco_emendas(ARQUIVOS_EMENDAS["Comissão"])
-
-# --- 🎛️ PAINEL LATERAL DE NAVEGAÇÃO E FILTROS ---
-st.sidebar.header("Filtros de Pesquisa")
-
-tipo_emenda = st.sidebar.radio(
-    "Tipo de Emenda:",
-    ["Individuais", "Bancada Obrigatória", "Comissão"]
-)
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("Parâmetros do Filtro")
-
-col_ano1, col_ano2 = st.sidebar.columns(2)
-with col_ano1:
-    ano_inicial = st.number_input("Ano Inicial:", min_value=2000, max_value=2100, value=2023)
-with col_ano2:
-    ano_final = st.number_input("Ano Final:", min_value=2000, max_value=2100, value=2026)
-
-busca_parlamentar = st.sidebar.text_input("Parlamentar (Em branco = Todos):", value="").strip()
-busca_beneficiario = st.sidebar.text_input("Beneficiário / CNPJ (Em branco = Todos):", value="").strip()
-
-# Mapeamento dinâmico sem riscos de travamento por colunas ausentes
-if tipo_emenda == "Individuais":
-    df_ativo = df_ind.copy() if df_ind is not None else pd.DataFrame()
-elif tipo_emenda == "Bancada Obrigatória":
-    df_ativo = df_ban.copy() if df_ban is not None else pd.DataFrame()
-else:
-    df_ativo = df_com.copy() if df_com is not None else pd.DataFrame()
 # Mapeamento do DataFrame ativo baseado na seleção do menu lateral
 if tipo_emenda == "Individuais":
     df_ativo = df_ind.copy()
@@ -168,3 +154,4 @@ st.markdown(
     "Desenvolvido por: Bartolomeu Lima (Corecon-ES 1541) & AI Workspace 🤝 2026</p>",
     unsafe_allow_html=True
 )
+
