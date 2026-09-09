@@ -12,21 +12,37 @@ ARQUIVOS_EMENDAS = {
     "Comissão": "emendas_comissao.csv"
 }
 
-# --- FUNÇÃO ROBUSTA PARA CARREGAMENTO DE DATASETS ---
+# --- FUNÇÃO ROBUSTA COM AUTO-DETECÇÃO DE SEPARADOR ---
 def carregar_banco_emendas(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
         return pd.DataFrame()
-    for encoding_tentativa in ["utf-8-sig", "latin1", "cp1252"]:
-        try:
-            df = pd.read_csv(caminho_arquivo, sep=";", dtype=str)
-            df.columns = df.columns.str.strip()
-            # Remove nulos e remove espaços em branco das células
-            for col in df.columns:
-                df[col] = df[col].fillna("").astype(str).str.strip()
-            return df
-        except Exception:
-            continue
-    return pd.DataFrame()
+    
+    # Testa os encodings mais comuns e os dois principais separadores do Excel
+    for enc in ["utf-8-sig", "latin1", "cp1252"]:
+        for separador in [";", ","]:
+            try:
+                # Carrega o dataframe testando a combinação atual
+                df = pd.read_csv(caminho_arquivo, sep=separador, dtype=str)
+                df.columns = df.columns.str.strip()
+                
+                # Se o Pandas leu correto, o número de colunas deve ser maior que 1
+                if len(df.columns) > 1:
+                    # Limpa espaços em branco das células e substitui nulos
+                    for col in df.columns:
+                        df[col] = df[col].fillna("").astype(str).str.strip()
+                    return df
+            except Exception:
+                continue
+                
+    # Fallback caso tenha lido apenas 1 coluna na primeira tentativa (tenta forçar leitura)
+    try:
+        df = pd.read_csv(caminho_arquivo, sep=None, engine="python", dtype=str)
+        df.columns = df.columns.str.strip()
+        for col in df.columns:
+            df[col] = df[col].fillna("").astype(str).str.strip()
+        return df
+    except Exception:
+        return pd.DataFrame()
 
 # Carregamento inicial das bases
 df_ind = carregar_banco_emendas(ARQUIVOS_EMENDAS["Individuais"])
