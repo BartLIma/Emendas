@@ -4,10 +4,10 @@ import os
 import urllib.parse
 
 st.set_page_config(layout="wide", page_title="Monitoramento de Emendas Parlamentares")
-# --- NOMES PADRONIZADOS DOS ARQUIVOS DE EMENDAS (ATUALIZADO) ---
+# --- NOMES PADRONIZADOS DOS ARQUIVOS DE EMENDAS ---
 ARQUIVOS_EMENDAS = {
     "Individuais": "emendas_individuais.csv",
-    "Bancada": "emendas_bancada.csv",  # <--- Mudamos a chave aqui para "Bancada"
+    "Bancada Obrigatória": "emendas_bancada.csv",
     "Comissão": "emendas_comissao.csv"
 }
 # --- NOMES PADRONIZADOS DOS ARQUIVOS DE EMENDAS ---
