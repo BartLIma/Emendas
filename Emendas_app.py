@@ -48,7 +48,19 @@ def carregar_banco_emendas(caminho_arquivo):
 df_ind = carregar_banco_emendas(ARQUIVOS_EMENDAS["Individuais"])
 df_ban = carregar_banco_emendas(ARQUIVOS_EMENDAS["Bancada Obrigatória"])
 df_com = carregar_banco_emendas(ARQUIVOS_EMENDAS["Comissão"])
-
+# --- 🔍 BLOCO DE DIAGNÓSTICO TEMPORÁRIO (REMOVER DEPOIS) ---
+st.markdown("### 🛠️ Depuração e Inspeção de Arquivos Crús")
+for nome_tipo, nome_arq in ARQUIVOS_EMENDAS.items():
+    if os.path.exists(nome_arq):
+        try:
+            with open(nome_arq, "r", encoding="utf-8", errors="ignore") as f:
+                linhas_cruas = [f.readline().strip() for _ in range(3)]
+            
+            st.write(f"📁 **Arquivo:** `{nome_arq}` ({nome_tipo})")
+            st.code("\n".join(linhas_cruas), language="text")
+        except Exception as e:
+            st.error(f"Erro ao ler `{nome_arq}`: {e}")
+st.markdown("---")
 # --- 🎛️ PAINEL LATERAL DE NAVEGAÇÃO E FILTROS ---
 st.sidebar.header("Filtros de Pesquisa")
 
