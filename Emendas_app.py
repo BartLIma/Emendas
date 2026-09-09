@@ -1,66 +1,29 @@
-import pandas as pd
-import streamlit as st
-import os
-import urllib.parse
-
-st.set_page_config(layout="wide", page_title="Monitoramento de Emendas Parlamentares")
-
-# --- NOMES PADRONIZADOS DOS ARQUIVOS DE EMENDAS ---
-ARQUIVOS_EMENDAS = {
-    "Individuais": "emendas_individuais.csv",
-    "Bancada Obrigatória": "emendas_bancada.csv",
-    "Comissão": "emendas_comissao.csv"
-}
-
-# --- FUNÇÃO ROBUSTA COM AUTO-DETECÇÃO DE SEPARADOR ---
+ --- FUNÇÃO CORRIGIDA BASEADA NO DIAGNÓSTICO (PONTO E VÍRGULA) ---
 def carregar_banco_emendas(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
         return pd.DataFrame()
     
-    # Testa os encodings mais comuns e os dois principais separadores do Excel
-    for enc in ["utf-8-sig", "latin1", "cp1252"]:
-        for separador in [";", ","]:
-            try:
-                # Carrega o dataframe testando a combinação atual
-                df = pd.read_csv(caminho_arquivo, sep=separador, dtype=str)
-                df.columns = df.columns.str.strip()
-                
-                # Se o Pandas leu correto, o número de colunas deve ser maior que 1
-                if len(df.columns) > 1:
-                    # Limpa espaços em branco das células e substitui nulos
-                    for col in df.columns:
-                        df[col] = df[col].fillna("").astype(str).str.strip()
-                    return df
-            except Exception:
-                continue
-                
-    # Fallback caso tenha lido apenas 1 coluna na primeira tentativa (tenta forçar leitura)
-    try:
-        df = pd.read_csv(caminho_arquivo, sep=None, engine="python", dtype=str)
-        df.columns = df.columns.str.strip()
-        for col in df.columns:
-            df[col] = df[col].fillna("").astype(str).str.strip()
-        return df
-    except Exception:
-        return pd.DataFrame()
+    # Como vimos na imagem, o padrão correto e exato é latin1/cp1252 com separador ponto e vírgula
+    for enc in ["latin1", "utf-8-sig", "cp1252"]:
+        try:
+            df = pd.read_csv(caminho_arquivo, sep=";", encoding=enc, dtype=str)
+            df.columns = df.columns.str.strip()
+            
+            if not df.empty and len(df.columns) > 1:
+                # Limpa espaços em branco e remove nulos
+                for col in df.columns:
+                    df[col] = df[col].fillna("").astype(str).str.strip()
+                return df
+        except Exception:
+            continue
+            
+    return pd.DataFrame()
 
-# Carregamento inicial das bases
+# Carregamento cirúrgico dos bancos
 df_ind = carregar_banco_emendas(ARQUIVOS_EMENDAS["Individuais"])
 df_ban = carregar_banco_emendas(ARQUIVOS_EMENDAS["Bancada Obrigatória"])
 df_com = carregar_banco_emendas(ARQUIVOS_EMENDAS["Comissão"])
-# --- 🔍 BLOCO DE DIAGNÓSTICO TEMPORÁRIO (REMOVER DEPOIS) ---
-st.markdown("### 🛠️ Depuração e Inspeção de Arquivos Crús")
-for nome_tipo, nome_arq in ARQUIVOS_EMENDAS.items():
-    if os.path.exists(nome_arq):
-        try:
-            with open(nome_arq, "r", encoding="utf-8", errors="ignore") as f:
-                linhas_cruas = [f.readline().strip() for _ in range(3)]
-            
-            st.write(f"📁 **Arquivo:** `{nome_arq}` ({nome_tipo})")
-            st.code("\n".join(linhas_cruas), language="text")
-        except Exception as e:
-            st.error(f"Erro ao ler `{nome_arq}`: {e}")
-st.markdown("---")
+
 # --- 🎛️ PAINEL LATERAL DE NAVEGAÇÃO E FILTROS ---
 st.sidebar.header("Filtros de Pesquisa")
 
@@ -72,17 +35,22 @@ tipo_emenda = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.subheader("Parâmetros do Filtro")
 
-# Definição dos anos padrão exigidos (2023 a 2026)
 col_ano1, col_ano2 = st.sidebar.columns(2)
 with col_ano1:
     ano_inicial = st.number_input("Ano Inicial:", min_value=2000, max_value=2100, value=2023)
 with col_ano2:
     ano_final = st.number_input("Ano Final:", min_value=2000, max_value=2100, value=2026)
 
-# Filtro de texto para Parlamentar e Beneficiário (vazio = todos)
 busca_parlamentar = st.sidebar.text_input("Parlamentar (Em branco = Todos):", value="").strip()
 busca_beneficiario = st.sidebar.text_input("Beneficiário / CNPJ (Em branco = Todos):", value="").strip()
 
+# Mapeamento dinâmico sem riscos de travamento por colunas ausentes
+if tipo_emenda == "Individuais":
+    df_ativo = df_ind.copy() if df_ind is not None else pd.DataFrame()
+elif tipo_emenda == "Bancada Obrigatória":
+    df_ativo = df_ban.copy() if df_ban is not None else pd.DataFrame()
+else:
+    df_ativo = df_com.copy() if df_com is not None else pd.DataFrame()
 # Mapeamento do DataFrame ativo baseado na seleção do menu lateral
 if tipo_emenda == "Individuais":
     df_ativo = df_ind.copy()
