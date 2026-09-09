@@ -1,4 +1,4 @@
- --- FUNÇÃO CORRIGIDA BASEADA NO DIAGNÓSTICO (PONTO E VÍRGULA) ---
+# --- FUNÇÃO CORRIGIDA BASEADA NO DIAGNÓSTICO (PONTO E VÍRGULA) ---
 def carregar_banco_emendas(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
         return pd.DataFrame()
