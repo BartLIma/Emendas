@@ -33,7 +33,7 @@ def carregar_banco_emendas(caminho_arquivo):
 
 # Carregamento cirúrgico dos bancos
 df_ind = carregar_banco_emendas(ARQUIVOS_EMENDAS["Individuais"])
-df_ban = carregar_banco_emendas(ARQUIVOS_EMENDAS["Bancada Obrigatória"])
+df_ban = carregar_banco_emendas(ARQUIVOS_EMENDAS["Bancada"])
 df_com = carregar_banco_emendas(ARQUIVOS_EMENDAS["Comissão"])
 
 # --- 🎛️ PAINEL LATERAL DE NAVEGAÇÃO E FILTROS ---
