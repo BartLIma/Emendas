@@ -113,26 +113,35 @@ elif df_ativo.empty:
 if df_filtrado.empty:
     st.info("ℹ️ Nenhum registro encontrado para os filtros selecionados.")
 else:
-    # 1. Painel de Resumos Financeiros (Totalizadores de Moeda)
+    # 1. Painel de Resumos Financeiros (Totalizadores de Moeda Limpos e Seguros)
     colunas_valores = ["Instrumento (R$)", "Empenhado (R$)", "Pago (R$)"]
     totais = {}
     
     for col_val in colunas_valores:
         if col_val in df_filtrado.columns:
-            # Limpeza rápida de pontos e vírgulas textuais para conversão numérica correta
-            serie_limpa = df_filtrado[col_val].str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
-            totais[col_val] = pd.to_numeric(serie_limpa, errors="coerce").fillna(0).sum()
+            # LIMPEZA PROFUNDA E ULTRA-SEGURA: Remove R$, espaços e ajusta pontos/vírgulas do Excel
+            serie_limpa = df_filtrado[col_val].astype(str).str.replace("R$", "", regex=False)
+            serie_limpa = serie_limpa.str.replace(" ", "", regex=False).str.strip()
+            
+            # Trata formato brasileiro (1.234,56) convertendo temporariamente para internacional (1234.56)
+            serie_limpa = serie_limpa.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
+            
+            # Converte para numérico ignorando textos inválidos (ex: hifens ou células vazias)
+            totais[col_val] = pd.to_numeric(serie_limpa, errors="coerce").fillna(0.0).sum()
         else:
             totais[col_val] = 0.0
-
     st.markdown("### 📊 Sumarização dos Recursos Filtrados")
     col_m1, col_m2, col_m3 = st.columns(3)
     with col_m1:
-        st.metric("Total Instrumento", f"R$ {totais['Instrumento (R$)']:=,2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        # Formatação nativa segura do Python para exibição no padrão monetário brasileiro
+        valor_formatado_inst = f"R$ {totais['Instrumento (R$)']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        st.metric("Total Instrumento", valor_formatado_inst)
     with col_m2:
-        st.metric("Total Empenhado", f"R$ {totais['Empenhado (R$)']:=,2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        valor_formatado_emp = f"R$ {totais['Empenhado (R$)']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        st.metric("Total Empenhado", valor_formatado_emp)
     with col_m3:
-        st.metric("Total Pago", f"R$ {totais['Pago (R$)']:=,2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        valor_formatado_pag = f"R$ {totais['Pago (R$)']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        st.metric("Total Pago", valor_formatado_pag)
 
     # 2. Exibição da Tabela Completa Tratada em Tela
     st.markdown(f"**Registros localizados:** {len(df_filtrado)} linhas.")
